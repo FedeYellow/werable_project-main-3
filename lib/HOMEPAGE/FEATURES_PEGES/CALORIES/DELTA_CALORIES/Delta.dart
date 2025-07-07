@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:werable_project/HOMEPAGE/FEATURES_PEGES/CALORIES/CaloriesProvider.dart';
 import 'package:werable_project/HOMEPAGE/FEATURES_PEGES/CALORIES/DELTA_CALORIES/InfoPage.dart';
-import 'package:werable_project/HOMEPAGE/FEATURES_PEGES/PROFILE_CARD/profile_cards.dart';
+
 
 class WeeklyCaloriesDeltaChartCard extends StatefulWidget {
   const WeeklyCaloriesDeltaChartCard({super.key});

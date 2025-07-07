@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:werable_project/HOMEPAGE/FEATURES_PEGES/BMI/BMImodel.dart';
-import 'package:werable_project/HOMEPAGE/FEATURES_PEGES/CALORIES/CaloriesCard.dart';
 import 'package:werable_project/HOMEPAGE/FEATURES_PEGES/CALORIES/DELTA_CALORIES/Delta.dart';
 import 'package:werable_project/HOMEPAGE/FEATURES_PEGES/CALORIES/FOOD_DIARY/DiaryCard.dart';
 import 'package:werable_project/HOMEPAGE/FEATURES_PEGES/CALORIES/WEEK/CaloriesChartWeekCard.dart';
@@ -45,8 +44,8 @@ class _HomePageState extends State<HomePage> {
     await sp.remove('access');
     await sp.remove('refresh');
 
-    // limpiar el carrito
-    // Provider.of<CartProvider>(context, listen: false).clear();
+    final cartProvider = Provider.of<CartProvider>(context, listen: false);
+    await cartProvider.clear();
 
     Navigator.pushAndRemoveUntil(
       context,
@@ -124,8 +123,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 
-                  const SizedBox(height: 30), //Map Card
-                  MapCard(),
+                  
 
                   const SizedBox(height: 20),
                   (ageYears < 5)
@@ -138,12 +136,14 @@ class _HomePageState extends State<HomePage> {
                     : const Column(
                       children: [
                         BMICard(),
-                        DistanceCard(),
-                        DiscountCard(),
                         CaloricRequirementCard(),
+                        DiaryCard(),
                         WeeklyCaloriesChartCard(),
                         WeeklyCaloriesDeltaChartCard(),
-                        DiaryCard(),
+                        DistanceCard(),
+                        DiscountCard(),
+                        const SizedBox(height: 30), //Map Card
+                        MapCard(),
                       ],
                     ),
                 ],

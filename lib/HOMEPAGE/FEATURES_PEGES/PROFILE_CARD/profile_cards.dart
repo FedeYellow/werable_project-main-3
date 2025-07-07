@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_profile_picture/flutter_profile_picture.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'package:werable_project/HOMEPAGE/FEATURES_PEGES/PROFILE_CARD/edit_profile_card.dart';
 
 class ProfileCard extends StatelessWidget {
   final String firstName;

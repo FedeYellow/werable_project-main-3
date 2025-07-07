@@ -37,7 +37,7 @@ class CartProvider extends ChangeNotifier {
   return _products.fold(0, (sum, item) => sum + item.calories);
   }
    
-  void clear() async {
+  Future<void> clear() async {
     _products.clear();
     _discount = 0.0;
     final cartPrefs = await SharedPreferences.getInstance();
@@ -62,26 +62,29 @@ class CartProvider extends ChangeNotifier {
   }
 
   // cargar carrito desde SharedPreferences
-  Future<void> loadCartFromPrefs(String profileName) async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonStr = prefs.getString('cartData');
+  Future<void> loadCartFromPrefs(String currentProfileName) async {
+  final prefs = await SharedPreferences.getInstance();
+  final jsonStr = prefs.getString('cartData');
 
-    if (jsonStr != null) {
+  if (jsonStr != null) {
+    final data = jsonDecode(jsonStr);
+    final savedProfile = data['profile'] ?? '';
 
-      final data = jsonDecode(jsonStr);
-
-      final savedProfile = data['profile'] ?? '';
-      if (savedProfile != profileName) {
-        clear();
-        return;
-      }
-
-      final productsList = data['products'] as List;
-      _products.clear();
-      _products.addAll(productsList.map((p) => Product.fromJson(p)).toList());
-      _discount = data['discount'] ?? 0.0;
-      notifyListeners();
+    // ✅ Cancella il carrello se l'utente è cambiato
+    if (savedProfile != currentProfileName) {
+      await clear(); // importante usare await per attendere la rimozione
+      return;
     }
+
+    final productsList = data['products'] as List;
+    _products.clear();
+    _products.addAll(productsList.map((p) => Product.fromJson(p)).toList());
+    _discount = data['discount'] ?? 0.0;
+    notifyListeners();
   }
+}
+
+
+  
 
 }
