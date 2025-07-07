@@ -4,6 +4,12 @@ import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'dart:convert';
 import 'package:werable_project/HOMEPAGE/FEATURES_PEGES/BMI/BMIdetails.dart';
 
+// This widget displays a BMI (Body Mass Index) card which calculates and shows
+// the user's BMI based on data stored in SharedPreferences. It also visually 
+// presents the BMI value using a linear gauge and classifies the result 
+// (e.g., Underweight, Normal, Overweight, Obese). A button is provided to 
+// navigate to a detailed BMI information page.
+
 class BMICard extends StatefulWidget {
   const BMICard({super.key});
 
@@ -12,15 +18,16 @@ class BMICard extends StatefulWidget {
 }
 
 class _BMICardState extends State<BMICard> {
-  double? bmi;
-  String status = '';
+  double? bmi; // Holds the calculated BMI value
+  String status = ''; // Holds the BMI classification (e.g., Normal, Obese)
 
   @override
   void initState() {
     super.initState();
-    _loadProfile();
+    _loadProfile(); // Loads the user's profile data and calculates BMI
   }
 
+  // Loads profile data from SharedPreferences, calculates BMI, and updates state
   Future<void> _loadProfile() async {
     final sp = await SharedPreferences.getInstance();
     final data = sp.getString('profile');
@@ -31,15 +38,17 @@ class _BMICardState extends State<BMICard> {
     final double? heightCm = double.tryParse(profile['height'] ?? '');
     final double? heightM = heightCm != null ? heightCm / 100 : null;
 
+    // Calculate BMI if valid weight and height are available
     if (weight != null && heightM != null && heightM > 0) {
       final calculatedBmi = weight / (heightM * heightM);
       setState(() {
         bmi = calculatedBmi;
-        status = _classifyBMI(calculatedBmi);
+        status = _classifyBMI(calculatedBmi); // Classifies the BMI result
       });
     }
   }
 
+  // Returns a string classification based on the BMI value
   String _classifyBMI(double bmi) {
     if (bmi < 18.5) return 'Underweight';
     if (bmi < 25) return 'Normal';
@@ -50,7 +59,7 @@ class _BMICardState extends State<BMICard> {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color:Colors.grey[100],
+      color: Colors.grey[100],
       margin: const EdgeInsets.symmetric(vertical: 12),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -65,7 +74,7 @@ class _BMICardState extends State<BMICard> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Etichette sopra il gauge
+                  // Labels above the gauge indicating BMI categories
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: const [
@@ -77,6 +86,7 @@ class _BMICardState extends State<BMICard> {
                   ),
                   const SizedBox(height: 8),
 
+                  // Visual gauge representing the BMI range and user's value
                   SfLinearGauge(
                     minimum: 10,
                     maximum: 40,
@@ -115,11 +125,13 @@ class _BMICardState extends State<BMICard> {
                   ),
 
                   const SizedBox(height: 12),
-                  Text('BMI: ${bmi!.toStringAsFixed(1)} - Status: $status'), // valor de BMI redondeado a 1 decimal + estado de salud
-                
-                  // COSECHA --> BOTON PARA MAS INFO
+
+                  // Displays BMI value and classification
+                  Text('BMI: ${bmi!.toStringAsFixed(1)} - Status: $status'),
+
                   const SizedBox(height: 8),
 
+                  // Button to navigate to a detailed BMI information page
                   Align(
                     alignment: Alignment.center,
                     child: ElevatedButton(
@@ -129,10 +141,15 @@ class _BMICardState extends State<BMICard> {
                         textStyle: const TextStyle(fontSize: 16),
                       ),
                       onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => BMIDetails(bmi: bmi!)));
+                        Navigator.push(context, MaterialPageRoute(
+                          builder: (context) => BMIDetails(bmi: bmi!),
+                        ));
                       },
-                      child: Text('More information', style:TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    )
+                      child: Text(
+                        'More information',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
                   )
                 ],
               ),

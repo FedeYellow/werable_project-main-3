@@ -5,7 +5,9 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:werable_project/HOMEPAGE/FEATURES_PEGES/CALORIES/CaloriesProvider.dart';
 import 'package:werable_project/HOMEPAGE/FEATURES_PEGES/CALORIES/DELTA_CALORIES/InfoPage.dart';
 
-
+// This widget displays a weekly chart showing the calorie delta (calories in - calories out)
+// for each day of the current week. It also calculates the total delta and classifies 
+// the user's nutritional status accordingly.
 class WeeklyCaloriesDeltaChartCard extends StatefulWidget {
   const WeeklyCaloriesDeltaChartCard({super.key});
 
@@ -15,41 +17,47 @@ class WeeklyCaloriesDeltaChartCard extends StatefulWidget {
 }
 
 class _WeeklyCaloriesDeltaChartCardState extends State<WeeklyCaloriesDeltaChartCard> {
-  final dateFormat = DateFormat('yyyy-MM-dd');
+  final dateFormat = DateFormat('yyyy-MM-dd'); // Used to format dates as strings
 
   @override
   void initState() {
     super.initState();
     final provider = context.read<Caloriesprovider>();
-    provider.clearData();
-    _loadDeltaData();
+    provider.clearData(); // Clear any existing data in the provider
+    _loadDeltaData();     // Load and compute data for the current week
   }
 
+  // Loads daily calories in and out for the current week from SharedPreferences
   Future<void> _loadDeltaData() async {
     final today = DateTime.now();
     final monday = today.subtract(Duration(days: today.weekday - 1));
-    final fullWeek = List.generate(8, (i) => monday.add(Duration(days: i)));
+    final fullWeek = List.generate(8, (i) => monday.add(Duration(days: i))); // 8 days including today
 
     final startStr = dateFormat.format(monday);
     final endStr = dateFormat.format(today);
 
     final provider = context.read<Caloriesprovider>();
-    await provider.loadDiaryCaloriesFromPrefs(fullWeek);
-    await provider.loadDailyCaloriesFromPrefs(fullWeek);
-    provider.fetchWeekData(startStr, endStr);
+    await provider.loadDiaryCaloriesFromPrefs(fullWeek);  // Load calories consumed
+    await provider.loadDailyCaloriesFromPrefs(fullWeek);  // Load calories burned
+    provider.fetchWeekData(startStr, endStr);              // Fetch combined data
   }
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<Caloriesprovider>();
 
+    // Show loading indicator if data is not yet available
     if (!provider.isWeekDataLoaded) {
       return const Center(child: CircularProgressIndicator());
     }
 
+    // Generate chart data from provider
     final chartData = _generateChartData(provider);
+
+    // Calculate total weekly calorie delta
     final totalDelta = chartData.fold<int>(0, (sum, item) => sum + item.delta);
 
+    // Determine user's weekly nutritional status
     String nutritionStatus;
     if (totalDelta > 0) {
       nutritionStatus = 'Overnutrition';
@@ -68,6 +76,7 @@ class _WeeklyCaloriesDeltaChartCardState extends State<WeeklyCaloriesDeltaChartC
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            // Line chart showing daily calorie delta for the week
             SfCartesianChart(
               title: const ChartTitle(
                 text: 'Weekly Calorie Delta',
@@ -87,6 +96,7 @@ class _WeeklyCaloriesDeltaChartCardState extends State<WeeklyCaloriesDeltaChartC
                 interval: 1000,
                 labelStyle: TextStyle(fontSize: 10),
                 plotBands: <PlotBand>[
+                  // Horizontal line at 0 to indicate balance
                   PlotBand(
                     isVisible: true,
                     start: 0,
@@ -105,7 +115,7 @@ class _WeeklyCaloriesDeltaChartCardState extends State<WeeklyCaloriesDeltaChartC
                   yValueMapper: (data, _) => data.delta,
                   color: Colors.blue,
                   pointColorMapper: (data, _) =>
-                      data.delta >= 0 ? Colors.green : Colors.red,
+                      data.delta >= 0 ? Colors.green : Colors.red, // Green for surplus, red for deficit
                   dataLabelSettings: const DataLabelSettings(
                     isVisible: true,
                   ),
@@ -113,6 +123,8 @@ class _WeeklyCaloriesDeltaChartCardState extends State<WeeklyCaloriesDeltaChartC
               ],
             ),
             const SizedBox(height: 16),
+            
+            // Display total calorie delta and nutrition status with an info button
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -136,7 +148,7 @@ class _WeeklyCaloriesDeltaChartCardState extends State<WeeklyCaloriesDeltaChartC
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const NutritionInfoPage(),
+                        builder: (_) => const NutritionInfoPage(), // Opens detailed info page
                       ),
                     );
                   },
@@ -149,6 +161,7 @@ class _WeeklyCaloriesDeltaChartCardState extends State<WeeklyCaloriesDeltaChartC
     );
   }
 
+  // Converts the weekly calorie data into a list of _DayDelta for chart plotting
   List<_DayDelta> _generateChartData(Caloriesprovider provider) {
     final today = DateTime.now();
     final monday = today.subtract(Duration(days: today.weekday - 1));
@@ -156,15 +169,16 @@ class _WeeklyCaloriesDeltaChartCardState extends State<WeeklyCaloriesDeltaChartC
 
     return fullWeek.map((date) {
       final key = dateFormat.format(date);
-      final caloriesOut = provider.getDailyCalories(key);
-      final caloriesIn = provider.diaryCaloriesMap[key] ?? 0;
-      final delta = caloriesIn - caloriesOut;
+      final caloriesOut = provider.getDailyCalories(key);       // Calories burned
+      final caloriesIn = provider.diaryCaloriesMap[key] ?? 0;   // Calories consumed
+      final delta = caloriesIn - caloriesOut;                   // Calorie balance
       final label = '${DateFormat.E('en_US').format(date)}\n${date.day}';
       return _DayDelta(day: label, delta: delta);
     }).toList();
   }
 }
 
+// Data model for daily calorie delta used in chart
 class _DayDelta {
   final String day;
   final int delta;

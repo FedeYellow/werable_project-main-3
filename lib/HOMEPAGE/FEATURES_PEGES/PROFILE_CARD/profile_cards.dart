@@ -3,6 +3,8 @@ import 'package:flutter_profile_picture/flutter_profile_picture.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
+/// ProfileCard displays a user summary including basic health data and avatar.
+/// Intended to be used inside user dashboard or home screens.
 class ProfileCard extends StatelessWidget {
   final String firstName;
   final String lastName;
@@ -11,8 +13,8 @@ class ProfileCard extends StatelessWidget {
   final String height;
   final String weight;
   final int numericAge;
-  final Widget? bottom;
-  final String? muac;
+  final Widget? bottom;     // Optional widget below the profile (e.g. buttons)
+  final String? muac;       // Mid-Upper Arm Circumference (optional, used for children under 5)
 
   const ProfileCard({
     super.key,
@@ -27,6 +29,8 @@ class ProfileCard extends StatelessWidget {
     this.muac,
   });
 
+  /// Loads the user's profile from SharedPreferences and returns it
+  /// as a map of String keys and values. Used for hydration and persistence.
   static Future<Map<String, String>> loadProfile() async {
     final sp = await SharedPreferences.getInstance();
     final jsonString = sp.getString('profile');
@@ -35,6 +39,8 @@ class ProfileCard extends StatelessWidget {
     return decoded.map((key, value) => MapEntry(key, value.toString()));
   }
 
+  /// Builds the widget tree for the profile card. Displays personal data,
+  /// avatar, and optional additional content passed in `bottom`.
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -64,7 +70,6 @@ class ProfileCard extends StatelessWidget {
 
                       if (numericAge < 5)
                         Text('MUAC: ${muac ?? '-'} cm'),
-
                     ],  
                   ),
                 ),
@@ -81,7 +86,6 @@ class ProfileCard extends StatelessWidget {
               const SizedBox(height: 10),
               bottom!,
             ],
-
           ],
         ),
       ),

@@ -17,10 +17,12 @@ import 'package:werable_project/HOMEPAGE/FEATURES_PEGES/NUTRITION_CARD/ChildNutr
 import 'package:werable_project/UTILS/age_utils.dart';
 import 'package:werable_project/HOMEPAGE/FEATURES_PEGES/DISCOUNT/DiscountCard.dart';
 
+/// HomePage is the main screen displayed after login.
+/// It shows the user's profile, personalized nutrition and activity data,
+/// and access to other feature cards like BMI, calorie tracking, distance, and a cart.
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
 
-  
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -30,7 +32,8 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    // cargamos el carrito del usuario al abrir la Home
+
+    // Load the user's cart based on their profile when HomePage is initialized
     Future.microtask(() async {
       final profile = await ProfileCard.loadProfile();
       final profileName = profile['firstName'] ?? '';
@@ -39,6 +42,7 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  /// Logs the user out: clears tokens and cart data, then navigates back to LoginPage.
   Future<void> _logout(BuildContext context) async {
     final sp = await SharedPreferences.getInstance();
     await sp.remove('access');
@@ -54,12 +58,20 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Homepage', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white, decoration: TextDecoration.underline, decorationColor: Colors.white)),
+        title: const Text(
+          'Homepage',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            decoration: TextDecoration.underline,
+            decorationColor: Colors.white,
+          ),
+        ),
         backgroundColor: Color(0xFF3E5F8A),
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.white),
@@ -72,7 +84,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: Container(
-        color: Colors.grey[200], // color de fondo del body
+        color: Colors.grey[200], // Page background color
         child: FutureBuilder<Map<String, String>>(
           future: ProfileCard.loadProfile(),
           builder: (context, snapshot) {
@@ -84,20 +96,19 @@ class _HomePageState extends State<HomePage> {
 
             final ageYears = int.tryParse(profile['age'] ?? '0') ?? 0;
 
-            // To put profile_card in months/years
+            // Get formatted age from birthDate (e.g., "2 years" or "10 months")
             final birthDateStr = profile['birthDate'];
 
-            // añado esto para que no explote si hay birthdate null - probando lo de la pantalla roja
-              if (birthDateStr == null) {
-                return const Center(child: Text('No profile data found. Please register.'));
-              }
-              final birthDate = DateTime.tryParse(birthDateStr);
-              if (birthDate == null) {
-                return const Center(child: Text('Invalid birth date in profile.'));
-              }
+            if (birthDateStr == null) {
+              return const Center(child: Text('No profile data found. Please register.'));
+            }
 
-            //final birthDate = DateTime.parse(birthDateStr!);
-            final ageMY = formatAge(birthDate); // age in months or years
+            final birthDate = DateTime.tryParse(birthDateStr);
+            if (birthDate == null) {
+              return const Center(child: Text('Invalid birth date in profile.'));
+            }
+
+            final ageMY = formatAge(birthDate); // e.g., "3 years"
 
             if (profile.isEmpty) {
               return Center(child: Text('No user profiles found.'));
@@ -107,45 +118,44 @@ class _HomePageState extends State<HomePage> {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
+                  // Profile card at the top
                   ProfileCard(
                     firstName: profile['firstName'] ?? '',
                     lastName: profile['lastName'] ?? '',
-                    //age: profile['age'] ?? '',
-                    age: ageMY, // x years / x months - cadena
-                    numericAge: ageYears, // only the number
+                    age: ageMY,
+                    numericAge: ageYears,
                     gender: profile['gender'] ?? '',
                     height: profile['height'] ?? '',
-                    weight: profile['weight'] ?? '', 
-                    muac: (profile['muac']?.isNotEmpty == true) ? profile['muac'] : null, // solo se pasa cuando se cumple el if en profilecard 
-                    // - me aseguro de convertir cadenas vacías "" en null antes de pasarlas al widget
+                    weight: profile['weight'] ?? '',
+                    muac: (profile['muac']?.isNotEmpty == true) ? profile['muac'] : null,
                     bottom: EditProfileButton(
-                      onEdited: () => setState(() {}),
+                      onEdited: () => setState(() {}), // Refresh UI when profile is edited
                     ),
                   ),
-                
-                  
 
                   const SizedBox(height: 20),
+
+                  // Display different cards depending on age
                   (ageYears < 5)
                     ? const Column(
-                      children: [
-                        ChildNutritionCard(),
-                        DiaryCard(),
-                      ],
-                    )
+                        children: [
+                          ChildNutritionCard(),
+                          DiaryCard(),
+                        ],
+                      )
                     : const Column(
-                      children: [
-                        BMICard(),
-                        CaloricRequirementCard(),
-                        DiaryCard(),
-                        WeeklyCaloriesChartCard(),
-                        WeeklyCaloriesDeltaChartCard(),
-                        DistanceCard(),
-                        DiscountCard(),
-                        const SizedBox(height: 30), //Map Card
-                        MapCard(),
-                      ],
-                    ),
+                        children: [
+                          BMICard(),
+                          CaloricRequirementCard(),
+                          DiaryCard(),
+                          WeeklyCaloriesChartCard(),
+                          WeeklyCaloriesDeltaChartCard(),
+                          DistanceCard(),
+                          DiscountCard(),
+                          SizedBox(height: 30),
+                          MapCard(),
+                        ],
+                      ),
                 ],
               ),
             );
@@ -153,6 +163,7 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
 
+      // Floating action button with cart icon and badge showing item count
       floatingActionButton: Consumer<CartProvider>(
         builder: (context, cart, _) {
           final totalItems = cart.products.length + (cart.discount > 0 ? 1 : 0);
@@ -165,12 +176,13 @@ class _HomePageState extends State<HomePage> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                      MaterialPageRoute(builder: (_) => const CartPage()),
+                    MaterialPageRoute(builder: (_) => const CartPage()),
                   );
                 },
                 child: const Icon(Icons.shopping_cart_checkout),
               ),
 
+              // Badge showing number of items in cart
               if (totalItems > 0)
                 Positioned(
                   right: 0,
@@ -185,7 +197,7 @@ class _HomePageState extends State<HomePage> {
                     child: Text(
                       '$totalItems',
                       style: const TextStyle(
-                        color:Color(0xFF3E5F8A),
+                        color: Color(0xFF3E5F8A),
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),

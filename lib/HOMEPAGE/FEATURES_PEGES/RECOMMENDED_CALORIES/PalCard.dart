@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:werable_project/HOMEPAGE/FEATURES_PEGES/PROFILE_CARD/profile_cards.dart';
 
+/// A widget that displays the user's BMR (Basal Metabolic Rate) and estimated daily caloric needs
+/// based on their profile (weight, height, age, gender) and selected activity level.
+/// Activity level is saved per user using SharedPreferences.
 class CaloricRequirementCard extends StatefulWidget {
   const CaloricRequirementCard({super.key});
 
@@ -14,6 +17,7 @@ class _CaloricRequirementCardState extends State<CaloricRequirementCard> {
   String activityLevel = 'Sedentary';
   String? gender;
 
+  // Multipliers for physical activity level (PAL)
   final Map<String, double> activityMultipliers = {
     'Sedentary': 1.2,
     'Lightly Active': 1.375,
@@ -22,6 +26,7 @@ class _CaloricRequirementCardState extends State<CaloricRequirementCard> {
     'Extra Active': 1.9,
   };
 
+  // Descriptions of activity frequency for display
   final Map<String, String> activityToDays = {
     'Sedentary': '0 days per week',
     'Lightly Active': '1/2 days per week',
@@ -33,12 +38,13 @@ class _CaloricRequirementCardState extends State<CaloricRequirementCard> {
   @override
   void initState() {
     super.initState();
-    _loadUserDataAndCalculateBMR();
+    _loadUserDataAndCalculateBMR(); // Load user data and calculate BMR
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _askUserForActivityLevel(context);
+      _askUserForActivityLevel(context); // Ask for activity level if needed
     });
   }
 
+  /// Loads user profile data and calculates BMR and caloric needs.
   Future<void> _loadUserDataAndCalculateBMR() async {
     final profile = await ProfileCard.loadProfile();
 
@@ -50,6 +56,7 @@ class _CaloricRequirementCardState extends State<CaloricRequirementCard> {
     final sp = await SharedPreferences.getInstance();
     final String activity = sp.getString('activity_level') ?? 'Sedentary';
 
+    // Calculate BMR based on gender
     double calculatedBMR;
     if (genderValue == 'm') {
       calculatedBMR = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
@@ -70,41 +77,37 @@ class _CaloricRequirementCardState extends State<CaloricRequirementCard> {
     });
   }
 
+  /// Saves BMR and caloric needs to shared preferences.
   Future<void> _saveCaloricParams({required int bmr, required int caloricNeed}) async {
     final sp = await SharedPreferences.getInstance();
     await sp.setInt('bmr', bmr);
     await sp.setInt('caloric_need', caloricNeed);
   }
 
+  /// Saves the selected activity level and associates it with the current user.
   Future<void> _saveActivityLevel(String level) async {
     final sp = await SharedPreferences.getInstance();
 
-    // obtener el nombere del perfil actual
     final profile = await ProfileCard.loadProfile();
     final profileName = profile['firstName'] ?? '';
 
     await sp.setString('activity_level', level);
-
-    // para lo del nombre:
     await sp.setString('activity_level_user', profileName);
 
-    await _loadUserDataAndCalculateBMR();
+    await _loadUserDataAndCalculateBMR(); // Recalculate BMR after updating level
   }
 
+  /// Prompts the user to select an activity level if not already set for their profile.
   Future<void> _askUserForActivityLevel(BuildContext context) async {
     final sp = await SharedPreferences.getInstance();
     final existingLevel = sp.getString('activity_level');
-
-    // first name:
     final savedUser = sp.getString('activity_level_user');
 
-    // obtengo nombre actual:
     final profile = await ProfileCard.loadProfile();
     final profileName = profile['firstName'] ?? '';
 
-    // solo lo pide si no existe o es otro user
+    // Only show the dialog if activity level is missing or belongs to another user
     if (existingLevel != null && savedUser == profileName) return;
-    //if (existingLevel != null) return; antes
 
     String selected = 'Sedentary';
 
@@ -120,10 +123,7 @@ class _CaloricRequirementCardState extends State<CaloricRequirementCard> {
                 isExpanded: true,
                 value: selected,
                 dropdownColor: Colors.grey[100],
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.black, // color texto seleccionado
-                ),
+                style: const TextStyle(fontSize: 13, color: Colors.black),
                 onChanged: (value) {
                   if (value != null) {
                     setState(() => selected = value);
@@ -160,6 +160,7 @@ class _CaloricRequirementCardState extends State<CaloricRequirementCard> {
     );
   }
 
+  /// Helper widget to display a label-value pair.
   Widget buildInfoRow(String label, String value, {FontWeight weight = FontWeight.normal}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
@@ -194,14 +195,12 @@ class _CaloricRequirementCardState extends State<CaloricRequirementCard> {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 6),
+            // Dropdown to allow user to change activity level
             DropdownButton<String>(
               isExpanded: true,
               value: activityLevel,
               dropdownColor: Colors.grey[100],
-              style: const TextStyle(
-                fontSize: 13,
-                color: Colors.black, // color texto seleccionado
-              ),
+              style: const TextStyle(fontSize: 13, color: Colors.black),
               onChanged: (String? newValue) {
                 if (newValue != null) _saveActivityLevel(newValue);
               },
@@ -217,6 +216,7 @@ class _CaloricRequirementCardState extends State<CaloricRequirementCard> {
               buildInfoRow('BMR', '$bmr kcal/day', weight: FontWeight.w500),
               buildInfoRow('Caloric Need', '$caloricNeed kcal/day', weight: FontWeight.w500),
               buildInfoRow('Training Days', activityDays),
+              // Expandable info section explaining formulas
               Theme(
                 data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
                 child: ExpansionTile(
@@ -233,17 +233,17 @@ class _CaloricRequirementCardState extends State<CaloricRequirementCard> {
                         children: [
                           if (gender == 'm') 
                             const Text(
-                              'BMR (men):\n88.362 + (13.397 × kg) + (4.799 × cm) - (5.677 × age)',
+                              'BMR (men):\n88.362 + (13.397 x kg) + (4.799 x cm) - (5.677 x age)',
                               style: TextStyle(fontSize: 12),
                             )
                           else 
                             const Text(
-                              'BMR (women):\n447.593 + (9.247 × kg) + (3.098 × cm) - (4.330 × age)',
+                              'BMR (women):\n447.593 + (9.247 x kg) + (3.098 x cm) - (4.330 x age)',
                               style: TextStyle(fontSize: 12),
                             ),
                           const SizedBox(height: 4),
                           const Text(
-                            'Caloric Need = BMR × Activity Level (PAL)',
+                            'Caloric Need = BMR x Activity Level (PAL)',
                             style: TextStyle(fontSize: 12),
                           ),
                         ],

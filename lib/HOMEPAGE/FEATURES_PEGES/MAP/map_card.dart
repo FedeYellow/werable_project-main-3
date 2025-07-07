@@ -4,7 +4,8 @@ import 'package:werable_project/HOMEPAGE/FEATURES_PEGES/MAP/Map_const.dart';
 import 'package:werable_project/HOMEPAGE/FEATURES_PEGES/MAP/Map.dart';
 import 'package:werable_project/VENDITORE/ShopperData.dart';
 
-
+/// A card widget showing a mini map preview with markers for available shopper locations.
+/// Includes a button to open the full map page.
 class MapCard extends StatelessWidget {
   const MapCard({super.key});
 
@@ -18,7 +19,7 @@ class MapCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Contatore in alto
+          // Header section showing the number of available stops (shoppers)
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: Row(
@@ -35,25 +36,29 @@ class MapCard extends StatelessWidget {
               ],
             ),
           ),
-          // Stack con mappa e bottone fluttuante
+
+          // Map section inside a stack with a floating button to open the full map
           SizedBox(
             height: 200,
             child: Stack(
               children: [
+                // Map widget with markers
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: FlutterMap(
                     options: MapOptions(
-                      center: defaultMapCenter,
+                      center: defaultMapCenter, // Initial map center
                       zoom: 14.0,
                     ),
                     children: [
+                      // Base map tile layer
                       TileLayer(
-                        urlTemplate:
-                            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                         subdomains: ['a', 'b', 'c'],
                         userAgentPackageName: 'com.example.app',
                       ),
+
+                      // Marker layer using shopper locations
                       MarkerLayer(
                         markers: shoppers.map((shopper) {
                           return Marker(
@@ -72,6 +77,8 @@ class MapCard extends StatelessWidget {
                     ],
                   ),
                 ),
+
+                // Button to navigate to full map page
                 Positioned(
                   bottom: 10,
                   right: 10,
@@ -84,13 +91,17 @@ class MapCard extends StatelessWidget {
                       ),
                     ),
                     onPressed: () {
+                      // Navigate to full-screen map
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const MapPage()),
                       );
                     },
-                    icon: const Icon(Icons.map, color: Colors.white,),
-                    label: const Text("Open map", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    icon: const Icon(Icons.map, color: Colors.white),
+                    label: const Text(
+                      "Open map",
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ],

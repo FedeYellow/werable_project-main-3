@@ -5,6 +5,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:werable_project/HOMEPAGE/FEATURES_PEGES/CALORIES/CaloriesProvider.dart';
 
+// This widget displays a weekly bar chart showing total calories burned per day,
+// based on data stored in SharedPreferences and loaded via CaloriesProvider.
+// If no data is available for today, the chart uses the BMR as a fallback.
+
 class WeeklyCaloriesChartCard extends StatefulWidget {
   const WeeklyCaloriesChartCard({super.key});
 
@@ -13,16 +17,17 @@ class WeeklyCaloriesChartCard extends StatefulWidget {
 }
 
 class _WeeklyCaloriesChartCardState extends State<WeeklyCaloriesChartCard> {
-  int? bmr;
+  int? bmr; // Basal Metabolic Rate (used if no calorie data exists for today)
   final dateFormat = DateFormat('yyyy-MM-dd');
 
   @override
   void initState() {
     super.initState();
-    _loadBmr();
-    _fetchWeekDataAndSave();
+    _loadBmr();               // Load the stored BMR value from SharedPreferences
+    _fetchWeekDataAndSave(); // Load calories data and save totals per day
   }
 
+  // Loads the BMR from SharedPreferences
   Future<void> _loadBmr() async {
     final prefs = await SharedPreferences.getInstance();
     final storedBmr = prefs.getInt('bmr');
@@ -33,32 +38,34 @@ class _WeeklyCaloriesChartCardState extends State<WeeklyCaloriesChartCard> {
     }
   }
 
+  // Loads and processes the calories burned during the current week
   Future<void> _fetchWeekDataAndSave() async {
     final today = DateTime.now();
     final yesterday = today.subtract(const Duration(days: 1));
     final monday = yesterday.subtract(Duration(days: yesterday.weekday - 1));
     final startStr = dateFormat.format(monday);
     final endStr = dateFormat.format(yesterday);
-
     final fullWeek = List.generate(8, (i) => monday.add(Duration(days: i)));
 
-    // Carica i dati salvati da SharedPreferences nel provider
+    // Load data for each day from SharedPreferences into the provider
     await context.read<Caloriesprovider>().loadDailyCaloriesFromPrefs(fullWeek);
 
-    // Chiamata fetchWeekData senza await perché è void
+    // Fetch aggregated weekly data (doesn't return a Future)
     context.read<Caloriesprovider>().fetchWeekData(startStr, endStr);
 
-    // Piccola attesa per sicurezza che i dati si aggiornino
+    // Brief delay to ensure provider has updated
     await Future.delayed(const Duration(milliseconds: 100));
 
     final weekData = context.read<Caloriesprovider>().weeklyCalories;
 
+    // Aggregate daily calories into a map
     final Map<String, int> dailyTotals = {};
     for (final entry in weekData) {
       final key = dateFormat.format(entry.date);
       dailyTotals[key] = (dailyTotals[key] ?? 0) + entry.value;
     }
 
+    // Save daily totals back to SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     for (final date in fullWeek) {
       final key = dateFormat.format(date);
@@ -74,15 +81,16 @@ class _WeeklyCaloriesChartCardState extends State<WeeklyCaloriesChartCard> {
 
     final monday = now.subtract(Duration(days: now.weekday - 1));
     final fullWeek = List.generate(8, (i) => monday.add(Duration(days: i)));
-
     final labelFormat = DateFormat.E('en_US');
 
+    // Build a map of total calories per day
     final dailyTotals = <String, int>{};
     for (final entry in weekData) {
       final key = dateFormat.format(entry.date);
       dailyTotals[key] = (dailyTotals[key] ?? 0) + entry.value;
     }
 
+    // Prepare chart data from full week and color logic
     final chartData = fullWeek.map((date) {
       final key = dateFormat.format(date);
       final label = '${labelFormat.format(date)}\n${date.day}';
@@ -93,23 +101,24 @@ class _WeeklyCaloriesChartCardState extends State<WeeklyCaloriesChartCard> {
       if (_isSameDay(date, now)) {
         final hasData = dailyTotals.containsKey(key);
         value = hasData ? dailyTotals[key]! : (bmr ?? 0);
-        color = hasData ? Colors.blue : Colors.grey;
+        color = hasData ? Colors.blue : Colors.grey; // Use grey if fallback BMR is shown
       } else if (date.isBefore(now)) {
         value = dailyTotals[key] ?? 0;
         color = Colors.blue;
       } else {
         value = 0;
-        color = Colors.blue.shade100;
+        color = Colors.blue.shade100; // Future dates
       }
 
       return _DayCalories(day: label, calories: value, color: color);
     }).toList();
 
     return Card(
-      color:Colors.grey[100],
+      color: Colors.grey[100],
       margin: const EdgeInsets.all(16),
       child: Column(
         children: [
+          // Legend
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Row(
@@ -121,6 +130,7 @@ class _WeeklyCaloriesChartCardState extends State<WeeklyCaloriesChartCard> {
               ],
             ),
           ),
+          // Chart
           Padding(
             padding: const EdgeInsets.all(16),
             child: SfCartesianChart(
@@ -154,10 +164,12 @@ class _WeeklyCaloriesChartCardState extends State<WeeklyCaloriesChartCard> {
     );
   }
 
+  // Helper to check if two dates are the same day
   bool _isSameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 }
 
+// Model to hold chart data (day label, calorie value, bar color)
 class _DayCalories {
   final String day;
   final int calories;
@@ -166,6 +178,7 @@ class _DayCalories {
   _DayCalories({required this.day, required this.calories, required this.color});
 }
 
+// Custom legend item with color box and label
 class _LegendItem extends StatelessWidget {
   final Color color;
   final String label;

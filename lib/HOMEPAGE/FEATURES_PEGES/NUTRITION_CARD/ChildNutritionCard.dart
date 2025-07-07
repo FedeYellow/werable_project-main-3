@@ -5,7 +5,7 @@ import 'package:werable_project/UTILS/nutrition_utils.dart';
 import 'package:werable_project/UTILS/age_utils.dart';
 import 'package:werable_project/HOMEPAGE/FEATURES_PEGES/NUTRITION_CARD/ChildNutritionCardDetails.dart';
 
-
+/// Widget that displays a brief nutrition status summary for children aged 0–5.
 class ChildNutritionCard extends StatefulWidget {
   const ChildNutritionCard({super.key});
 
@@ -14,10 +14,13 @@ class ChildNutritionCard extends StatefulWidget {
 }
 
 class _ChildNutritionCardState extends State<ChildNutritionCard> {
+  // Variables holding parsed user data
   double? weight;
   double? height;
   int? age;
   double? muac;
+
+  // Nutrition classification results
   String waStatus = '';
   String haStatus = '';
   String whStatus = '';
@@ -26,9 +29,10 @@ class _ChildNutritionCardState extends State<ChildNutritionCard> {
   @override
   void initState() {
     super.initState();
-    _loadProfile();
+    _loadProfile(); // Load and classify nutrition data
   }
 
+  /// Loads profile data from shared preferences and classifies nutrition status
   Future<void> _loadProfile() async {
     final sp = await SharedPreferences.getInstance();
     final data = sp.getString('profile');
@@ -37,16 +41,14 @@ class _ChildNutritionCardState extends State<ChildNutritionCard> {
     final Map<String, dynamic> profile = jsonDecode(data);
     weight = double.tryParse(profile['weight'] ?? '');
     height = double.tryParse(profile['height'] ?? '');
-
     age = int.tryParse(profile['age'] ?? '');
-    
-    // age in months
+
     final birthDate = DateTime.parse(profile['birthDate']);
     final ageInMonths = calculateAgeInMonths(birthDate);
 
     muac = double.tryParse(profile['muac'] ?? '');
 
-    
+    // Classify nutrition status
     if (weight != null && height != null && age != null) {
       setState(() {
         waStatus = classifyWA(weight!, ageInMonths);
@@ -83,32 +85,35 @@ class _ChildNutritionCardState extends State<ChildNutritionCard> {
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
+
+                  // Nutrition indicators
                   Row(
                     children: [
                       const Text('• Weight for the age (W/A): ',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                          style: TextStyle(fontWeight: FontWeight.bold)),
                       Text(waStatus),
                     ],
                   ),
                   Row(
                     children: [
                       const Text('• Height for the age (H/A): ',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                          style: TextStyle(fontWeight: FontWeight.bold)),
                       Text(haStatus),
                     ],
                   ),
                   Row(
                     children: [
                       const Text('• Weight for the height (W/H): ',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                          style: TextStyle(fontWeight: FontWeight.bold)),
                       Text(whStatus),
                     ],
                   ),
+
+                  // MUAC with optional info button
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Flexible(
-                        fit: FlexFit.loose,
                         child: Text.rich(
                           TextSpan(
                             children: [
@@ -118,17 +123,14 @@ class _ChildNutritionCardState extends State<ChildNutritionCard> {
                               ),
                               TextSpan(
                                 text: muac != null
-                                  ? '${muac!.toStringAsFixed(1)} cm ($muacStatus)'
-                                  : 'No data (edit profile)',
+                                    ? '${muac!.toStringAsFixed(1)} cm ($muacStatus)'
+                                    : 'No data (edit profile)',
                               ),
                             ],
                           ),
                         ),
                       ),
-
                       if (muac == null) const SizedBox(width: 4),
-
-                      // Button info - how to measure muac
                       if (muac == null)
                         Tooltip(
                           message: "How to measure MUAC",
@@ -136,7 +138,7 @@ class _ChildNutritionCardState extends State<ChildNutritionCard> {
                           verticalOffset: 15,
                           child: IconButton(
                             padding: EdgeInsets.zero,
-                            constraints: BoxConstraints(),
+                            constraints: const BoxConstraints(),
                             icon: const Icon(Icons.info_outline),
                             onPressed: () {
                               showDialog(
@@ -144,7 +146,7 @@ class _ChildNutritionCardState extends State<ChildNutritionCard> {
                                 builder: (_) => AlertDialog(
                                   backgroundColor: Colors.grey[200],
                                   title: const Text(
-                                    "How to measure MUAC", 
+                                    "How to measure MUAC",
                                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                                   ),
                                   content: const Text(
@@ -172,6 +174,7 @@ class _ChildNutritionCardState extends State<ChildNutritionCard> {
 
                   const SizedBox(height: 12),
 
+                  // Button to open detailed breakdown screen
                   Align(
                     alignment: Alignment.center,
                     child: ElevatedButton(
@@ -194,9 +197,12 @@ class _ChildNutritionCardState extends State<ChildNutritionCard> {
                           ),
                         );
                       },
-                      child: const Text('More information', style:TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'More information',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
                     ),
-                  )
+                  ),
                 ],
               ),
       ),

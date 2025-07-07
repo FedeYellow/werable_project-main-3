@@ -56,14 +56,14 @@ class _RegistrationPageState extends State<RegistrationPage> {
       return;
     }
 
-    final birthDate = _selectedBirthDate!; // cojo la fecha del pibe y lo guardo en esta variable
+    final birthDate = _selectedBirthDate!; 
     final calculatedAge = calculateAgeInYears(birthDate);
 
     final profile = {
       'firstName': firstName,
       'lastName': lastName,
       'age': calculatedAge.toString(),
-      'birthDate': birthDate.toIso8601String(), // convierte el objeto dateTime en un string con formato stardard iso...
+      'birthDate': birthDate.toIso8601String(), 
       'gender': gender,
       'height': height,
       'weight': weight
